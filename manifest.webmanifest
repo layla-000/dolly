@@ -1,0 +1,11 @@
+{
+  "name": "Dolly Box",
+  "short_name": "Dolly Box",
+  "description": "Private doll collection manager",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f4f1",
+  "theme_color": "#f7f4f2",
+  "icons": []
+}

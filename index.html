@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f7f4f2" />
+  <meta name="description" content="Private doll collection manager" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Dolly Box" />
+  <link rel="manifest" href="manifest.webmanifest?v=1.0.0" />
+  <link rel="icon" href="dolly-box-icon.svg" type="image/svg+xml" />
+  <title>Dolly Box</title>
+  <link rel="stylesheet" href="styles.css?v=1.0.0" />
+</head>
+<body>
+
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="brand login-brand">
+        <div class="brand-mark">DB</div>
+        <div>
+          <strong>Dolly Box</strong>
+          <span>Private Collection</span>
+        </div>
+      </div>
+      <p class="eyebrow">PRIVATE ACCESS</p>
+      <h1>내 컬렉션에 로그인</h1>
+      <p class="login-copy">등록해 둔 Supabase 계정으로 로그인해 주세요.</p>
+
+      <form id="loginForm">
+        <label>Email
+          <input id="loginEmail" type="email" autocomplete="username" required />
+        </label>
+        <label>Password
+          <input id="loginPassword" type="password" autocomplete="current-password" required />
+        </label>
+        <button class="primary-button wide" type="submit">Login</button>
+        <p class="login-error" id="loginError"></p>
+      </form>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">DB</div>
+        <div>
+          <strong>Dolly Box</strong>
+          <span>Private Collection</span>
+        </div>
+      </div>
+
+      <nav class="nav-list" aria-label="주 메뉴">
+        <button class="nav-item active" data-view="dashboard"><span>⌂</span> Dashboard</button>
+        <button class="nav-item" data-view="dolls"><span>◉</span> Dolls</button>
+        <button class="nav-item" data-view="items"><span>◇</span> Items</button>
+        <button class="nav-item" data-view="wishlist"><span>☆</span> Wishlist</button>
+        <button class="nav-item" data-view="search"><span>⌕</span> Search</button>
+      </nav>
+
+      <div class="sidebar-note">
+        <span class="status-dot"></span>
+        v0.1 · Local preview
+      </div>
+    </aside>
+    <button class="sidebar-scrim" id="sidebarScrim" aria-label="메뉴 닫기"></button>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-button menu-button" id="menuButton" aria-label="메뉴 열기">☰</button>
+        <div>
+          <p class="eyebrow">DOLLY BOX</p>
+          <h1 id="pageTitle">Dashboard</h1>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-button" data-view-jump="search" aria-label="검색">⌕</button>
+          <button class="icon-button" id="logoutButton" title="로그아웃" aria-label="로그아웃">↪</button>
+          <button class="avatar" id="userAvatar" title="로그인 사용자">L</button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-dashboard">
+        <section class="hero-panel">
+          <div>
+            <p class="eyebrow">MY COLLECTION</p>
+            <h2>내 컬렉션을 한곳에서 정리해요.</h2>
+            <p class="hero-copy">인형, 아이템, 위시리스트를 빠르게 등록하고 필요한 것을 바로 찾아보세요.</p>
+          </div>
+          <div class="hero-badge">🧸</div>
+        </section>
+
+        <section class="section-block">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">QUICK ADD</p>
+              <h2>빠른 등록</h2>
+            </div>
+          </div>
+          <div class="quick-grid">
+            <button class="quick-card" data-demo-modal="doll">
+              <span class="quick-icon">🧸</span>
+              <span><strong>인형 등록</strong><small>Doll</small></span>
+              <b>＋</b>
+            </button>
+            <button class="quick-card" data-demo-modal="item">
+              <span class="quick-icon">👗</span>
+              <span><strong>아이템 등록</strong><small>Item</small></span>
+              <b>＋</b>
+            </button>
+            <button class="quick-card" data-demo-modal="wish">
+              <span class="quick-icon">⭐</span>
+              <span><strong>위시리스트</strong><small>Wishlist</small></span>
+              <b>＋</b>
+            </button>
+          </div>
+        </section>
+
+        <section class="section-block">
+          <div class="dashboard-search">
+            <span>⌕</span>
+            <input id="dashboardSearch" type="search" placeholder="이름, 메이커, 사이즈, 태그 검색" />
+            <button data-view-jump="search">상세 검색</button>
+          </div>
+        </section>
+
+        <section class="stats-grid">
+          <article class="stat-card">
+            <div class="stat-head"><span>🧸 Dolls</span><b>200</b></div>
+            <div class="stat-row"><span>구관</span><strong>120</strong></div>
+            <div class="stat-row"><span>육일</span><strong>50</strong></div>
+            <div class="stat-row"><span>솜깅</span><strong>30</strong></div>
+            <div class="progress"><span style="width:60%"></span></div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-head"><span>👗 Items</span><b>—</b></div>
+            <div class="stat-row"><span>의상</span><strong>—</strong></div>
+            <div class="stat-row"><span>가발</span><strong>—</strong></div>
+            <div class="stat-row"><span>안구</span><strong>—</strong></div>
+            <div class="progress muted"><span style="width:35%"></span></div>
+          </article>
+          <article class="stat-card accent-card">
+            <p class="eyebrow">WISHLIST</p>
+            <div class="wish-stat">12 <small>items</small></div>
+            <p>가져야해 <strong>3</strong></p>
+            <button data-view-jump="wishlist">위시리스트 보기 →</button>
+          </article>
+        </section>
+
+        <section class="section-block">
+          <div class="section-heading row">
+            <div>
+              <p class="eyebrow">RECENTLY ADDED</p>
+              <h2>최근 등록</h2>
+            </div>
+            <button class="text-button" data-view-jump="dolls">전체 보기 →</button>
+          </div>
+          <div class="card-grid compact" id="recentGrid"></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-dolls">
+        <div class="page-tools">
+          <div class="filter-row">
+            <button class="chip active">All</button><button class="chip">구관</button><button class="chip">육일</button><button class="chip">솜깅</button>
+          </div>
+          <button class="primary-button" data-demo-modal="doll">＋ Add Doll</button>
+        </div>
+        <div class="toolbar">
+          <label class="search-field"><span>⌕</span><input id="dollTextFilter" type="search" placeholder="이름·메이커·태그 검색" /></label>
+          <select id="dollSizeFilter"><option value="">Size · All</option></select>
+          <select id="dollMakerFilter"><option value="">Maker · All</option></select>
+          <select id="dollTagFilter"><option value="">Tag · All</option></select>
+        </div>
+        <div class="card-grid" id="dollGrid"></div>
+      </section>
+
+      <section class="view" id="view-items">
+        <div class="page-tools">
+          <div class="filter-row scroll">
+            <button class="chip active">All</button><button class="chip">의상</button><button class="chip">안구</button><button class="chip">가발</button><button class="chip">신발</button><button class="chip">악세사리</button><button class="chip">도구</button><button class="chip">기타</button>
+          </div>
+          <button class="primary-button" data-demo-modal="item">＋ Add Item</button>
+        </div>
+        <div class="toolbar">
+          <label class="search-field"><span>⌕</span><input id="itemTextFilter" type="search" placeholder="이름·메이커·태그 검색" /></label>
+          <select id="itemStatusFilter"><option value="">Status · All</option><option>보관중</option><option>착용중</option><option>판매예정</option></select>
+          <select id="itemSizeFilter"><option value="">Size · All</option></select>
+          <select id="itemDollFilter"><option value="">Doll · All</option></select>
+        </div>
+        <div class="card-grid" id="itemGrid"></div>
+      </section>
+
+      <section class="view" id="view-wishlist">
+        <div class="page-tools">
+          <div class="filter-row"><button class="chip active">All</button><button class="chip">관심</button><button class="chip">보통</button><button class="chip">🔥 가져야해</button></div>
+          <button class="primary-button" data-demo-modal="wish">＋ Add Wish</button>
+        </div>
+        <div class="wishlist-list" id="wishlistList"></div>
+      </section>
+
+      <section class="view" id="view-search">
+        <section class="search-panel search-panel-wide">
+          <p class="eyebrow">MULTI FILTER SEARCH</p>
+          <h2>컬렉션 상세 검색</h2>
+
+          <div class="advanced-search-grid">
+            <fieldset class="search-targets">
+              <legend>대상</legend>
+              <label><input id="searchTargetDolls" type="checkbox" checked> Dolls</label>
+              <label><input id="searchTargetItems" type="checkbox" checked> Items</label>
+            </fieldset>
+
+            <label>카테고리
+              <select id="searchCategory"><option value="">All Categories</option></select>
+            </label>
+
+            <label>Maker
+              <select id="searchMaker"><option value="">All Makers</option></select>
+            </label>
+
+            <label>Size
+              <select id="searchSize"><option value="">All Sizes</option></select>
+            </label>
+
+            <label>Tag
+              <select id="searchTag"><option value="">All Tags</option></select>
+            </label>
+
+            <label>Status
+              <select id="searchStatus">
+                <option value="">All Status</option>
+                <option>보관중</option><option>착용중</option><option>판매예정</option>
+              </select>
+            </label>
+
+            <label class="search-query-label">Keyword
+              <input id="searchKeyword" type="search" placeholder="이름, 메이커, 태그, 메모" />
+            </label>
+          </div>
+
+          <div class="search-actions">
+            <button class="secondary-button" id="resetAdvancedSearch">초기화</button>
+            <button class="primary-button" id="runAdvancedSearch">Search</button>
+          </div>
+        </section>
+
+        <section class="section-block">
+          <div class="section-heading row">
+            <div>
+              <p class="eyebrow">RESULTS</p>
+              <h2 id="searchResultTitle">검색 결과</h2>
+            </div>
+            <span class="search-count" id="searchResultCount">0 items</span>
+          </div>
+          <div class="search-results-grid" id="searchResults"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+
+
+
+
+  <div class="modal-backdrop" id="wishFormModal" hidden>
+    <div class="modal-card form-modal">
+      <button class="modal-close" id="wishFormClose" aria-label="닫기">×</button>
+      <p class="eyebrow">ADD WISHLIST</p>
+      <h2>위시리스트 등록</h2>
+
+      <form id="wishForm">
+        <div class="form-grid">
+          <label>이름
+            <input id="wishName" type="text" placeholder="원하는 인형/아이템 이름" required />
+          </label>
+
+          <label>카테고리
+            <select id="wishCategory" required>
+              <option value="">선택</option>
+              <option>헤드</option><option>본체</option><option>의상</option><option>안구</option>
+              <option>가발</option><option>신발</option><option>기타</option>
+            </select>
+          </label>
+
+          <label>가격
+            <input id="wishPrice" type="number" min="0" step="1" placeholder="0" />
+          </label>
+
+          <label>우선순위
+            <select id="wishPriority">
+              <option>관심</option>
+              <option selected>보통</option>
+              <option>가져야해</option>
+            </select>
+          </label>
+
+          <label>구매 상태
+            <select id="wishPurchaseStatus">
+              <option>못삼</option>
+              <option>안사기로함</option>
+              <option>구매!</option>
+            </select>
+          </label>
+
+          <label>판매처
+            <input id="wishSeller" type="text" placeholder="판매처" />
+          </label>
+
+          <label class="full">판매 링크
+            <input id="wishUrl" type="url" placeholder="https://..." />
+          </label>
+
+          <label>예약 마감일
+            <input id="wishDeadline" type="date" />
+          </label>
+
+          <label>구매일
+            <input id="wishPurchaseDate" type="date" />
+          </label>
+
+          <label class="full">태그
+            <input id="wishTags" type="text" placeholder="쉼표로 구분" />
+          </label>
+
+          <label class="full">메모
+            <textarea id="wishMemo" rows="4" placeholder="자유롭게 기록해 주세요"></textarea>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="secondary-button" id="wishFormCancel">취소</button>
+          <button type="submit" class="primary-button">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="wishDetailModal" hidden>
+    <div class="modal-card detail-modal wish-detail-modal">
+      <button class="modal-close" id="wishDetailClose" aria-label="닫기">×</button>
+      <section class="detail-info">
+        <p class="eyebrow">WISHLIST DETAIL</p>
+        <div class="detail-title-row">
+          <div>
+            <h2 id="wishDetailName">위시 이름</h2>
+            <p id="wishDetailSummary">카테고리 · 우선순위 · 구매 상태</p>
+          </div>
+        </div>
+
+        <div class="detail-grid">
+          <div><span>Price</span><strong id="wishDetailPrice">—</strong></div>
+          <div><span>Seller</span><strong id="wishDetailSeller">—</strong></div>
+          <div><span>Deadline</span><strong id="wishDetailDeadline">—</strong></div>
+          <div><span>Purchase Date</span><strong id="wishDetailPurchaseDate">—</strong></div>
+          <div class="full"><span>Sale Link</span><strong id="wishDetailUrl">—</strong></div>
+        </div>
+
+        <div class="detail-section">
+          <span class="detail-label">Tags</span>
+          <div class="detail-tags" id="wishDetailTags"></div>
+        </div>
+
+        <div class="detail-section">
+          <span class="detail-label">Memo</span>
+          <p class="detail-memo" id="wishDetailMemo">—</p>
+        </div>
+
+        <div class="purchase-convert" id="wishConvertPanel" hidden>
+          <p>🎉 구매 완료! Dolly Box에 등록할까요?</p>
+          <div>
+            <button class="secondary-button" id="convertToDoll">🧸 인형으로 등록</button>
+            <button class="secondary-button" id="convertToItem">👗 아이템으로 등록</button>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button class="secondary-button danger-button" id="wishDetailDelete">삭제</button>
+          <div>
+            <button class="secondary-button" id="wishDetailCloseButton">닫기</button>
+            <button class="primary-button" id="wishDetailEdit">수정</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="itemFormModal" hidden>
+    <div class="modal-card form-modal">
+      <button class="modal-close" id="itemFormClose" aria-label="닫기">×</button>
+      <p class="eyebrow">ADD ITEM</p>
+      <h2>아이템 등록</h2>
+
+      <form id="itemForm">
+        <div class="image-upload-block">
+          <div class="image-preview" id="itemImagePreview">
+            <span>👗</span>
+            <small>대표 이미지를 선택해 주세요</small>
+          </div>
+          <label class="upload-button">
+            이미지 선택
+            <input type="file" id="itemImageInput" accept="image/*" hidden />
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label>카테고리
+            <select id="itemCategory" required>
+              <option value="">선택</option>
+              <option>의상</option><option>안구</option><option>가발</option><option>신발</option>
+              <option>악세사리</option><option>도구</option><option>기타</option>
+            </select>
+          </label>
+
+          <label>상태
+            <select id="itemStatus" required>
+              <option>보관중</option>
+              <option>착용중</option>
+              <option>판매예정</option>
+            </select>
+          </label>
+
+          <label>이름
+            <input id="itemName" type="text" placeholder="아이템 이름" required />
+          </label>
+
+          <label>착용중인 인형
+            <select id="itemWearingDoll">
+              <option value="">지정 안 함</option>
+            </select>
+          </label>
+
+          <label>사이즈
+            <input id="itemSize" type="text" placeholder="예: MSD / 16mm / 8-9 inch" />
+          </label>
+
+          <label>보관 장소
+            <input id="itemStorage" type="text" placeholder="예: 서랍 A-2" />
+          </label>
+
+          <label>메이커
+            <input id="itemMaker" type="text" placeholder="메이커" />
+          </label>
+
+          <label>구매처
+            <input id="itemShop" type="text" placeholder="구매처" />
+          </label>
+
+          <label>구매 가격
+            <input id="itemPrice" type="number" min="0" step="1" placeholder="0" />
+          </label>
+
+          <label>태그
+            <input id="itemTags" type="text" placeholder="쉼표로 구분: 화이트, 레이스" />
+          </label>
+
+          <label class="full">메모
+            <textarea id="itemMemo" rows="4" placeholder="자유롭게 기록해 주세요"></textarea>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="secondary-button" id="itemFormCancel">취소</button>
+          <button type="submit" class="primary-button">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="itemDetailModal" hidden>
+    <div class="modal-card detail-modal">
+      <button class="modal-close" id="itemDetailClose" aria-label="닫기">×</button>
+
+      <div class="detail-layout">
+        <section class="detail-media">
+          <div class="detail-main-image" id="itemDetailMainImage">
+            <span>👗</span>
+          </div>
+        </section>
+
+        <section class="detail-info">
+          <p class="eyebrow">ITEM DETAIL</p>
+          <div class="detail-title-row">
+            <div>
+              <h2 id="itemDetailName">아이템 이름</h2>
+              <p id="itemDetailSummary">카테고리 · 상태 · 사이즈</p>
+            </div>
+          </div>
+
+          <div class="detail-grid">
+            <div><span>Maker</span><strong id="itemDetailMaker">—</strong></div>
+            <div><span>Storage</span><strong id="itemDetailStorage">—</strong></div>
+            <div><span>Shop</span><strong id="itemDetailShop">—</strong></div>
+            <div><span>Price</span><strong id="itemDetailPrice">—</strong></div>
+            <div class="full"><span>Wearing Doll</span><button type="button" class="detail-link" id="itemDetailDoll">지정 안 함</button></div>
+          </div>
+
+          <div class="detail-section">
+            <span class="detail-label">Tags</span>
+            <div class="detail-tags" id="itemDetailTags"></div>
+          </div>
+
+          <div class="detail-section">
+            <span class="detail-label">Memo</span>
+            <p class="detail-memo" id="itemDetailMemo">—</p>
+          </div>
+
+          <div class="detail-actions">
+            <button class="secondary-button danger-button" id="itemDetailDelete">삭제</button>
+            <div>
+              <button class="secondary-button" id="itemDetailCloseButton">닫기</button>
+              <button class="primary-button" id="itemDetailEdit">수정</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="dollDetailModal" hidden>
+    <div class="modal-card detail-modal">
+      <button class="modal-close" id="dollDetailClose" aria-label="닫기">×</button>
+
+      <div class="detail-layout">
+        <section class="detail-media">
+          <div class="detail-main-image" id="detailMainImage">
+            <span>🧸</span>
+          </div>
+        </section>
+
+        <section class="detail-info">
+          <p class="eyebrow">DOLL DETAIL</p>
+          <div class="detail-title-row">
+            <div>
+              <h2 id="detailName">인형 이름</h2>
+              <p id="detailSummary">카테고리 · 메이커 · 사이즈</p>
+            </div>
+          </div>
+
+          <div class="detail-grid">
+            <div><span>Maker</span><strong id="detailMaker">—</strong></div>
+            <div><span>Body</span><strong id="detailBody">—</strong></div>
+            <div><span>Size</span><strong id="detailSize">—</strong></div>
+            <div><span>Skin</span><strong id="detailSkin">—</strong></div>
+            <div><span>Makeup</span><strong id="detailMakeup">—</strong></div>
+            <div><span>Purchase Price</span><strong id="detailPrice">—</strong></div>
+          </div>
+
+          <div class="detail-section">
+            <span class="detail-label">Tags</span>
+            <div class="detail-tags" id="detailTags"></div>
+          </div>
+
+          <div class="detail-section">
+            <span class="detail-label" id="detailMemoTitle">Memo</span>
+            <p class="detail-memo" id="detailMemo">—</p>
+          </div>
+
+          <div class="detail-section">
+            <span class="detail-label">Currently Wearing</span>
+            <div class="detail-empty" id="dollWearingList">현재 착용 중인 아이템이 없어요.</div>
+          </div>
+
+          <div class="detail-actions">
+            <button class="secondary-button danger-button" id="detailDelete">삭제</button>
+            <div>
+              <button class="secondary-button" id="detailCloseButton">닫기</button>
+              <button class="primary-button" id="detailEdit">수정</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="dollFormModal" hidden>
+    <div class="modal-card form-modal">
+      <button class="modal-close" id="dollFormClose" aria-label="닫기">×</button>
+      <p class="eyebrow">ADD DOLL</p>
+      <h2>인형 등록</h2>
+
+      <form id="dollForm">
+        <div class="image-upload-block">
+          <div class="image-preview" id="dollImagePreview">
+            <span>🧸</span>
+            <small>대표 이미지를 선택해 주세요</small>
+          </div>
+          <label class="upload-button">
+            이미지 선택
+            <input type="file" id="dollImageInput" accept="image/*" hidden />
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label>카테고리
+            <select id="dollCategory" required>
+              <option value="">선택</option>
+              <option>구관</option>
+              <option>육일</option>
+              <option>솜깅</option>
+            </select>
+          </label>
+
+          <label>메이커
+            <input id="dollMaker" type="text" placeholder="예: Volks" />
+          </label>
+
+          <label>이름
+            <input id="dollName" type="text" placeholder="인형 이름" required />
+          </label>
+
+          <label>바디
+            <input id="dollBody" type="text" placeholder="예: SDGr Girl" />
+          </label>
+
+          <label>사이즈
+            <select id="dollSize">
+              <option value="">선택</option>
+              <option>SD</option><option>MSD</option><option>USD</option>
+              <option>포켓</option><option>축생</option><option>육일</option>
+              <option>20cm</option><option>15cm</option><option>10cm</option><option>5cm</option>
+            </select>
+          </label>
+
+          <label>스킨색
+            <input id="dollSkin" type="text" placeholder="예: Normal" />
+          </label>
+
+          <label>메이크업
+            <input id="dollMakeup" type="text" placeholder="메이크업 정보" />
+          </label>
+
+          <label>구매 가격
+            <input id="dollPrice" type="number" min="0" step="1" placeholder="0" />
+          </label>
+
+          <label>태그
+            <input id="dollTags" type="text" placeholder="쉼표로 구분: 화이트, 금발" />
+          </label>
+
+          <label class="full">메모 이름
+            <input id="dollMemoTitle" type="text" placeholder="예: 이름의 유래" />
+          </label>
+
+          <label class="full">메모 설명
+            <textarea id="dollMemo" rows="4" placeholder="자유롭게 기록해 주세요"></textarea>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="secondary-button" id="dollFormCancel">취소</button>
+          <button type="submit" class="primary-button">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="demoModal" hidden>
+    <div class="modal-card">
+      <button class="modal-close" id="modalClose" aria-label="닫기">×</button>
+      <span class="modal-emoji" id="modalEmoji">🧸</span>
+      <p class="eyebrow">DOLLY BOX v0.1</p>
+      <h2 id="modalTitle">등록 화면 준비 완료</h2>
+      <p id="modalText">지금은 화면 구조를 확인하는 버전이에요. 다음 단계에서 실제 등록 폼과 Supabase 저장 기능을 연결합니다.</p>
+      <button class="primary-button wide" id="modalOkay">확인</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.config.js?v=1.0.0"></script>
+  <script src="supabase-data.js?v=1.0.0"></script>
+  <script src="app.js?v=1.0.0"></script>
+</body>
+</html>
