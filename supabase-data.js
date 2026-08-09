@@ -22,7 +22,7 @@
     return new Blob([bytes], {type:mime});
   }
 
-  async function compressImageDataUrl(dataUrl, maxSide=1600, quality=.82){
+  async function compressImageDataUrl(dataUrl, maxSide=1200, quality=.74){
     if(!dataUrl) return null;
     const sourceBlob = dataUrlToBlob(dataUrl);
     const bitmap = await createImageBitmap(sourceBlob);
@@ -38,14 +38,57 @@
     return await new Promise(resolve => canvas.toBlob(resolve, "image/webp", quality));
   }
 
-  async function signedUrl(path){
-    if(!path) return "";
-    const { data, error } = await client.storage.from(BUCKET).createSignedUrl(path, 86400);
-    if(error){
-      console.warn("Signed URL error", error);
+  const SIGNED_URL_SECONDS = 60 * 60 * 12; // 12 hours
+  const signedUrlPromises = new Map();
+
+  function signedCacheKey(path){
+    return `dolly:signed:${path}`;
+  }
+
+  function readSignedCache(path){
+    try{
+      const raw = localStorage.getItem(signedCacheKey(path));
+      if(!raw) return "";
+      const cached = JSON.parse(raw);
+      // Leave a 5 minute safety margin before expiry.
+      if(!cached?.url || !cached?.expiresAt || cached.expiresAt < Date.now() + 300000){
+        localStorage.removeItem(signedCacheKey(path));
+        return "";
+      }
+      return cached.url;
+    }catch{
       return "";
     }
-    return data?.signedUrl || "";
+  }
+
+  function writeSignedCache(path,url){
+    try{
+      localStorage.setItem(signedCacheKey(path), JSON.stringify({
+        url,
+        expiresAt: Date.now() + SIGNED_URL_SECONDS * 1000
+      }));
+    }catch{}
+  }
+
+  async function signedUrl(path){
+    if(!path) return "";
+    const cached = readSignedCache(path);
+    if(cached) return cached;
+    if(signedUrlPromises.has(path)) return signedUrlPromises.get(path);
+
+    const promise = (async()=>{
+      const { data, error } = await client.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS);
+      if(error){
+        console.warn("Signed URL error", error);
+        return "";
+      }
+      const url = data?.signedUrl || "";
+      if(url) writeSignedCache(path,url);
+      return url;
+    })().finally(()=>signedUrlPromises.delete(path));
+
+    signedUrlPromises.set(path,promise);
+    return promise;
   }
 
   async function getImageMap(){
@@ -55,14 +98,12 @@
       .eq("is_primary", true);
     throwIf(error);
 
-    const result = new Map();
-    await Promise.all((rows || []).map(async row => {
-      result.set(`${row.entity_type}:${row.entity_id}`, {
-        ...row,
-        imageData: await signedUrl(row.storage_path)
-      });
-    }));
-    return result;
+    // Do NOT create signed URLs here. Returning only storage paths means
+    // the main collection data can render immediately.
+    return new Map((rows || []).map(row => [
+      `${row.entity_type}:${row.entity_id}`,
+      row
+    ]));
   }
 
   async function getTagMaps(){
@@ -127,7 +168,7 @@
         memoTitle:d.memo_title || "",
         memo:d.memo || "",
         tags:tagMaps.dolls.get(d.id) || [],
-        imageData:imageMap.get(`doll:${d.id}`)?.imageData || "",
+        imageData:"",
         storagePath:imageMap.get(`doll:${d.id}`)?.storage_path || "",
         emoji:"🧸"
       })),
@@ -144,7 +185,7 @@
         price:Number(i.purchase_price || 0),
         memo:i.memo || "",
         tags:tagMaps.items.get(i.id) || [],
-        imageData:imageMap.get(`item:${i.id}`)?.imageData || "",
+        imageData:"",
         storagePath:imageMap.get(`item:${i.id}`)?.storage_path || "",
         emoji:"👗"
       })),
@@ -362,6 +403,6 @@
 
   window.DollyBackend = {
     client, getUser, loadAll, saveDoll, saveItem, saveWish,
-    deleteDoll, deleteItem, deleteWish
+    deleteDoll, deleteItem, deleteWish, getSignedImageUrl:signedUrl
   };
 })();

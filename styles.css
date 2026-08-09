@@ -802,3 +802,19 @@ button, input, select, textarea{
     padding-bottom:max(4px, env(safe-area-inset-bottom));
   }
 }
+
+
+/* v1.1 — progressive private-image loading */
+.card-image .uploaded-photo{
+  opacity:0;
+  transition:opacity .18s ease;
+}
+.card-image .uploaded-photo.image-ready{
+  opacity:1;
+}
+.card-image:has(.uploaded-photo.image-ready) .placeholder-art{
+  opacity:0;
+}
+.card-image{
+  contain:layout paint;
+}
