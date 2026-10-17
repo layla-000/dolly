@@ -2,6 +2,36 @@ const state = { dolls: [], items: [], wishes: [] };
 
 const titles = {dashboard:"Dashboard", dolls:"Dolls", items:"Items", wishlist:"Wishlist", search:"Search"};
 
+function escapeHtml(value){
+  return String(value ?? "").replace(/[&<>"']/g,char=>({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  })[char]);
+}
+
+function safeImageUrl(value){
+  const raw = String(value || "").trim();
+  if(/^data:image\/(?:png|jpe?g|gif|webp|avif);base64,/i.test(raw)) return raw;
+  try{
+    const url = new URL(raw, window.location.href);
+    return ["https:","http:"].includes(url.protocol) ? url.href : "";
+  }catch{
+    return "";
+  }
+}
+
+function safeExternalUrl(value){
+  try{
+    const url = new URL(String(value || "").trim());
+    return ["https:","http:"].includes(url.protocol) ? url.href : "";
+  }catch{
+    return "";
+  }
+}
+
+function tagMarkup(tags){
+  return (tags || []).map(tag=>`<span>#${escapeHtml(tag)}</span>`).join("");
+}
+
 function showView(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   document.querySelector(`#view-${name}`)?.classList.add("active");
@@ -13,31 +43,32 @@ function showView(name){
 
 function cardTemplate(item, type="doll"){
   const meta = type==="doll" ? `${item.category} · ${item.maker} · ${item.size}` : [item.category,item.size].filter(Boolean).join(" · ");
+  const imageUrl = safeImageUrl(item.imageData);
   return `
     <article class="collection-card"
-      data-id="${item.id}"
-      data-type="${type}"
-      data-category="${item.category || ""}"
-      data-maker="${item.maker || ""}"
-      data-size="${item.size || ""}"
-      data-status="${item.status || ""}"
-      data-doll="${item.wearingDollId || ""}"
-      data-tags="${(item.tags || []).join("|")}"
-      data-search="${[item.name,meta,item.memo || "",...(item.tags||[])].join(" ").toLowerCase()}">
+      data-id="${escapeHtml(item.id)}"
+      data-type="${escapeHtml(type)}"
+      data-category="${escapeHtml(item.category)}"
+      data-maker="${escapeHtml(item.maker)}"
+      data-size="${escapeHtml(item.size)}"
+      data-status="${escapeHtml(item.status)}"
+      data-doll="${escapeHtml(item.wearingDollId)}"
+      data-tags="${escapeHtml((item.tags || []).join("|"))}"
+      data-search="${escapeHtml([item.name,meta,item.memo || "",...(item.tags||[])].join(" ").toLowerCase())}">
       <div class="card-image">
-        <span class="placeholder-art">${item.emoji || "🧸"}</span>
-        ${item.imageData
-          ? `<img class="uploaded-photo image-ready" src="${item.imageData}" loading="lazy" decoding="async" alt="${item.name}">`
+        <span class="placeholder-art">${escapeHtml(item.emoji || "🧸")}</span>
+        ${imageUrl
+          ? `<img class="uploaded-photo image-ready" src="${escapeHtml(imageUrl)}" loading="lazy" decoding="async" alt="${escapeHtml(item.name)}">`
           : item.storagePath
-            ? `<img class="uploaded-photo lazy-private-image" data-image-path="${item.storagePath}" data-entity-type="${type}" data-entity-id="${item.id}" loading="lazy" decoding="async" alt="${item.name}">`
+            ? `<img class="uploaded-photo lazy-private-image" data-image-path="${escapeHtml(item.storagePath)}" data-entity-type="${escapeHtml(type)}" data-entity-id="${escapeHtml(item.id)}" loading="lazy" decoding="async" alt="${escapeHtml(item.name)}">`
             : ``}
-        <span class="card-badge">${type==="doll" ? item.category : item.status}</span>
+        <span class="card-badge">${escapeHtml(type==="doll" ? item.category : item.status)}</span>
       </div>
       <div class="card-body">
-        <h3>${item.name}</h3>
-        <div class="card-meta">${meta}</div>
-        <div class="card-tags">${(item.tags||[]).map(t=>`<span>#${t}</span>`).join("")}</div>
-        <button class="card-delete" data-delete-id="${item.id}" data-delete-type="${type}" title="삭제" aria-label="${item.name} 삭제">⌫</button>
+        <h3>${escapeHtml(item.name)}</h3>
+        <div class="card-meta">${escapeHtml(meta)}</div>
+        <div class="card-tags">${tagMarkup(item.tags)}</div>
+        <button class="card-delete" data-delete-id="${escapeHtml(item.id)}" data-delete-type="${escapeHtml(type)}" title="삭제" aria-label="${escapeHtml(item.name)} 삭제">⌫</button>
       </div>
     </article>`;
 }
@@ -47,12 +78,12 @@ function render(){
   document.getElementById("itemGrid").innerHTML = state.items.map(x=>cardTemplate(x,"item")).join("");
   document.getElementById("recentGrid").innerHTML = state.dolls.slice(0,5).map(x=>cardTemplate(x,"doll")).join("");
   document.getElementById("wishlistList").innerHTML = state.wishes.map(w=>`
-    <article class="wish-row" data-wish-id="${w.id}">
-      <div class="priority ${w.priority==="가져야해"?"hot":""}">${w.priority==="가져야해"?"🔥 가져야해":w.priority}</div>
-      <div><h3>${w.name}</h3><p>${w.category} · <span class="purchase-status-badge">${w.purchaseStatus || "못삼"}</span></p></div>
-      <div class="wish-price">${formatPrice(w.price)}</div>
-      <div class="deadline">${w.deadline ? `예약 마감 ${w.deadline}` : "마감 없음"}</div>
-      <button class="link-button" data-wish-link="${w.id}">판매 페이지 ↗</button>
+    <article class="wish-row" data-wish-id="${escapeHtml(w.id)}">
+      <div class="priority ${w.priority==="가져야해"?"hot":""}">${escapeHtml(w.priority==="가져야해"?"🔥 가져야해":w.priority)}</div>
+      <div><h3>${escapeHtml(w.name)}</h3><p>${escapeHtml(w.category)} · <span class="purchase-status-badge">${escapeHtml(w.purchaseStatus || "못삼")}</span></p></div>
+      <div class="wish-price">${escapeHtml(formatPrice(w.price))}</div>
+      <div class="deadline">${escapeHtml(w.deadline ? `예약 마감 ${w.deadline}` : "마감 없음")}</div>
+      <button class="link-button" data-wish-link="${escapeHtml(w.id)}">판매 페이지 ↗</button>
     </article>`).join("");
 
   const dollCounts = Object.fromEntries(["구관","육일","솜깅"].map(k=>[k,state.dolls.filter(d=>d.category===k).length]));
@@ -91,14 +122,15 @@ async function loadPrivateImage(img){
   img.dataset.loading = "1";
   try{
     const url = await DollyBackend.getSignedImageUrl(path);
-    if(!url) return;
+    const safeUrl = safeImageUrl(url);
+    if(!safeUrl) return;
     img.onload = ()=>{
       img.classList.add("image-ready");
       img.dataset.loaded = "1";
       const entity = entityForImage(img.dataset.entityType,img.dataset.entityId);
       if(entity) entity.imageData = url;
     };
-    img.src = url;
+    img.src = safeUrl;
   }catch(err){
     console.warn("Image lazy-load failed",path,err);
   }finally{
@@ -133,17 +165,19 @@ function initLazyImages(root=document){
 
 async function hydrateDetailImage(host,entity,fallback){
   if(!host || !entity) return;
-  if(entity.imageData){
-    host.innerHTML = `<img src="${entity.imageData}" decoding="async" alt="${entity.name}">`;
+  const existingUrl = safeImageUrl(entity.imageData);
+  if(existingUrl){
+    host.innerHTML = `<img src="${escapeHtml(existingUrl)}" decoding="async" alt="${escapeHtml(entity.name)}">`;
     return;
   }
-  host.innerHTML = `<span>${fallback}</span>`;
+  host.innerHTML = `<span>${escapeHtml(fallback)}</span>`;
   if(!entity.storagePath) return;
   try{
     const url = await DollyBackend.getSignedImageUrl(entity.storagePath);
     if(!url) return;
     entity.imageData = url;
-    if(host.isConnected) host.innerHTML = `<img src="${url}" decoding="async" alt="${entity.name}">`;
+    const safeUrl = safeImageUrl(url);
+    if(host.isConnected && safeUrl) host.innerHTML = `<img src="${escapeHtml(safeUrl)}" decoding="async" alt="${escapeHtml(entity.name)}">`;
   }catch(err){ console.warn("Detail image failed",err); }
 }
 
@@ -241,12 +275,14 @@ function openDollForm(doll=null){
     document.getElementById("dollMemo").value = doll.memo || "";
   }
 
-  dollImagePreview.innerHTML = selectedDollImageData
-    ? `<img src="${selectedDollImageData}" alt="인형 이미지 미리보기">`
+  const dollPreviewUrl = safeImageUrl(selectedDollImageData);
+  dollImagePreview.innerHTML = dollPreviewUrl
+    ? `<img src="${escapeHtml(dollPreviewUrl)}" alt="인형 이미지 미리보기">`
     : `<div><span>🧸</span><small>대표 이미지를 선택해 주세요</small></div>`;
   if(doll?.storagePath && !selectedDollImageData){
     DollyBackend.getSignedImageUrl(doll.storagePath).then(url=>{
-      if(url && editingDollId===doll.id) dollImagePreview.innerHTML = `<img src="${url}" alt="인형 이미지 미리보기">`;
+      const safeUrl = safeImageUrl(url);
+      if(safeUrl && editingDollId===doll.id) dollImagePreview.innerHTML = `<img src="${escapeHtml(safeUrl)}" alt="인형 이미지 미리보기">`;
     });
   }
 
@@ -276,7 +312,8 @@ dollImageInput.addEventListener("change",()=>{
   const reader = new FileReader();
   reader.onload = () => {
     selectedDollImageData = String(reader.result || "");
-    dollImagePreview.innerHTML = `<img src="${selectedDollImageData}" alt="인형 이미지 미리보기">`;
+    const safeUrl = safeImageUrl(selectedDollImageData);
+    if(safeUrl) dollImagePreview.innerHTML = `<img src="${escapeHtml(safeUrl)}" alt="인형 이미지 미리보기">`;
   };
   reader.readAsDataURL(file);
 });
@@ -407,7 +444,7 @@ function openWishDetail(id){
 
   const tags = document.getElementById("wishDetailTags");
   tags.innerHTML = (wish.tags || []).length
-    ? wish.tags.map(t=>`<span>#${t}</span>`).join("")
+    ? tagMarkup(wish.tags)
     : `<span>#태그없음</span>`;
 
   document.getElementById("wishConvertPanel").hidden = wish.purchaseStatus !== "구매!";
@@ -452,7 +489,12 @@ document.addEventListener("click",(e)=>{
     const wish = state.wishes.find(x=>x.id===linkBtn.dataset.wishLink);
     if(!wish) return;
     if(wish.saleUrl){
-      window.open(wish.saleUrl,"_blank","noopener");
+      const safeUrl = safeExternalUrl(wish.saleUrl);
+      if(!safeUrl){
+        alert("http 또는 https 판매 링크만 열 수 있어요.");
+        return;
+      }
+      window.open(safeUrl,"_blank","noopener,noreferrer");
     } else {
       alert("등록된 판매 링크가 없어요.");
     }
@@ -519,7 +561,7 @@ let currentDetailItemId = null;
 function refreshDollSelect(selected=""){
   const select = document.getElementById("itemWearingDoll");
   select.innerHTML = `<option value="">지정 안 함</option>` +
-    state.dolls.map(d=>`<option value="${d.id}">${d.name} · ${d.size || "미지정"}</option>`).join("");
+    state.dolls.map(d=>`<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)} · ${escapeHtml(d.size || "미지정")}</option>`).join("");
   select.value = selected || "";
 }
 
@@ -556,12 +598,14 @@ function openItemForm(item=null){
 
   syncItemStatusDollField();
 
-  itemImagePreview.innerHTML = selectedItemImageData
-    ? `<img src="${selectedItemImageData}" alt="아이템 이미지 미리보기">`
+  const itemPreviewUrl = safeImageUrl(selectedItemImageData);
+  itemImagePreview.innerHTML = itemPreviewUrl
+    ? `<img src="${escapeHtml(itemPreviewUrl)}" alt="아이템 이미지 미리보기">`
     : `<div><span>👗</span><small>대표 이미지를 선택해 주세요</small></div>`;
   if(item?.storagePath && !selectedItemImageData){
     DollyBackend.getSignedImageUrl(item.storagePath).then(url=>{
-      if(url && editingItemId===item.id) itemImagePreview.innerHTML = `<img src="${url}" alt="아이템 이미지 미리보기">`;
+      const safeUrl = safeImageUrl(url);
+      if(safeUrl && editingItemId===item.id) itemImagePreview.innerHTML = `<img src="${escapeHtml(safeUrl)}" alt="아이템 이미지 미리보기">`;
     });
   }
 
@@ -591,7 +635,8 @@ itemImageInput.addEventListener("change",()=>{
   const reader = new FileReader();
   reader.onload = ()=>{
     selectedItemImageData = String(reader.result || "");
-    itemImagePreview.innerHTML = `<img src="${selectedItemImageData}" alt="아이템 이미지 미리보기">`;
+    const safeUrl = safeImageUrl(selectedItemImageData);
+    if(safeUrl) itemImagePreview.innerHTML = `<img src="${escapeHtml(safeUrl)}" alt="아이템 이미지 미리보기">`;
   };
   reader.readAsDataURL(file);
 });
@@ -659,7 +704,7 @@ function openItemDetail(id){
 
   const tags = document.getElementById("itemDetailTags");
   tags.innerHTML = (item.tags || []).length
-    ? item.tags.map(t=>`<span>#${t}</span>`).join("")
+    ? tagMarkup(item.tags)
     : `<span>#태그없음</span>`;
 
   itemDetailModal.hidden = false;
@@ -733,7 +778,7 @@ function openDollDetail(id){
 
   const tags = document.getElementById("detailTags");
   tags.innerHTML = (doll.tags || []).length
-    ? doll.tags.map(t=>`<span>#${t}</span>`).join("")
+    ? tagMarkup(doll.tags)
     : `<span>#태그없음</span>`;
 
   const wearingHost = document.getElementById("dollWearingList");
@@ -741,8 +786,8 @@ function openDollDetail(id){
   if(wearing.length){
     wearingHost.className = "wearing-list";
     wearingHost.innerHTML = wearing.map(i=>`
-      <div class="wearing-item" data-open-item="${i.id}">
-        <div><strong>${i.name}</strong><br><span>${[i.category,i.size].filter(Boolean).join(" · ")}</span></div>
+      <div class="wearing-item" data-open-item="${escapeHtml(i.id)}">
+        <div><strong>${escapeHtml(i.name)}</strong><br><span>${escapeHtml([i.category,i.size].filter(Boolean).join(" · "))}</span></div>
         <span>보기 →</span>
       </div>`).join("");
   } else {
@@ -807,8 +852,8 @@ function uniqueSorted(values){
 function refillSelect(select, values, firstLabel){
   if(!select) return;
   const current = select.value;
-  select.innerHTML = `<option value="">${firstLabel}</option>` +
-    uniqueSorted(values).map(v=>`<option value="${String(v).replace(/"/g,"&quot;")}">${v}</option>`).join("");
+  select.innerHTML = `<option value="">${escapeHtml(firstLabel)}</option>` +
+    uniqueSorted(values).map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
   if([...select.options].some(o=>o.value===current)) select.value=current;
 }
 
@@ -822,7 +867,7 @@ function refreshFilterOptions(){
   if(dollSelect){
     const current=dollSelect.value;
     dollSelect.innerHTML = `<option value="">Doll · All</option>` +
-      state.dolls.map(d=>`<option value="${d.id}">${d.name}</option>`).join("");
+      state.dolls.map(d=>`<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)}</option>`).join("");
     if([...dollSelect.options].some(o=>o.value===current)) dollSelect.value=current;
   }
 
@@ -881,22 +926,23 @@ function resultCardTemplate(item,type){
   const meta = type==="doll"
     ? [item.category,item.maker,item.size].filter(Boolean).join(" · ")
     : [item.category,item.status,item.size].filter(Boolean).join(" · ");
+  const imageUrl = safeImageUrl(item.imageData);
   return `
-    <article class="collection-card search-result-card" data-result-id="${item.id}" data-result-type="${type}">
+    <article class="collection-card search-result-card" data-result-id="${escapeHtml(item.id)}" data-result-type="${escapeHtml(type)}">
       <div class="card-image">
         <span class="placeholder-art">${type==="doll"?"🧸":"👗"}</span>
-        ${item.imageData
-          ? `<img class="uploaded-photo image-ready" src="${item.imageData}" loading="lazy" decoding="async" alt="${item.name}">`
+        ${imageUrl
+          ? `<img class="uploaded-photo image-ready" src="${escapeHtml(imageUrl)}" loading="lazy" decoding="async" alt="${escapeHtml(item.name)}">`
           : item.storagePath
-            ? `<img class="uploaded-photo lazy-private-image" data-image-path="${item.storagePath}" data-entity-type="${type}" data-entity-id="${item.id}" loading="lazy" decoding="async" alt="${item.name}">`
+            ? `<img class="uploaded-photo lazy-private-image" data-image-path="${escapeHtml(item.storagePath)}" data-entity-type="${escapeHtml(type)}" data-entity-id="${escapeHtml(item.id)}" loading="lazy" decoding="async" alt="${escapeHtml(item.name)}">`
             : ``}
-        <span class="card-badge">${item.category || ""}</span>
+        <span class="card-badge">${escapeHtml(item.category)}</span>
         <span class="result-type-badge">${type==="doll"?"DOLL":"ITEM"}</span>
       </div>
       <div class="card-body">
-        <h3>${item.name}</h3>
-        <div class="card-meta">${meta}</div>
-        <div class="card-tags">${(item.tags||[]).map(t=>`<span>#${t}</span>`).join("")}</div>
+        <h3>${escapeHtml(item.name)}</h3>
+        <div class="card-meta">${escapeHtml(meta)}</div>
+        <div class="card-tags">${tagMarkup(item.tags)}</div>
       </div>
     </article>`;
 }
